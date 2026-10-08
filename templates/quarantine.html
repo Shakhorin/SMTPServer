@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Карантин{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Карантин</h1>
+    <p class="subtitle">Каталог: <code>{{ root }}</code></p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-wrap">
+    <table class="messages">
+      <thead>
+        <tr>
+          <th>От</th><th>Кому</th><th>Тема</th>
+          <th>Категория</th><th>Увер.</th><th>Файл</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for m in messages %}
+        <tr>
+          <td><span class="addr">{{ m.sender }}</span></td>
+          <td><span class="addr">{{ m.recipient }}</span></td>
+          <td><a href="/messages/{{ m.message_id }}">{{ m.subject }}</a></td>
+          <td><span class="badge" style="background:{{ m.category_color }}">
+              {{ m.category_title }}</span></td>
+          <td>{{ m.confidence_pct }}%</td>
+          <td><code class="muted" style="word-break:break-all;">{{ m.eml_path }}</code></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="muted">Карантин пуст</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

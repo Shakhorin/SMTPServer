@@ -3,6 +3,8 @@ import asyncio
 import json
 import smtplib
 import ssl
+import os
+import storage
 import time
 from aiosmtpd.controller import Controller
 import email
@@ -36,6 +38,13 @@ def _html_to_text(html: str) -> str:
     html = re.sub(r"<[^>]+>", "", html)
     return html_mod.unescape(html)
 
+def extract_message_id(raw: bytes) -> str:
+    """Берёт Message-ID из заголовка письма. Если его нет — генерирует свой."""
+    msg = email.message_from_bytes(raw, policy=email_policy)
+    mid = (msg.get("Message-ID") or "").strip().strip("<>")
+    if mid:
+        return mid
+    return f"{int(time.time() * 1000)}-{os.urandom(4).hex()}"
 
 def parse_mail(raw: bytes) -> tuple[str, str]:
     """
@@ -175,6 +184,7 @@ class Relay:
               f"from={envelope.mail_from} peer={peer} rcpt={address}")
         return "250 OK"
 
+    # Обработка + взаимодействие с бд
     async def handle_DATA(self, server, session, envelope):
         peer = session.peer[0]
         size = len(envelope.content)
@@ -187,28 +197,78 @@ class Relay:
         if preview:
             print(f"{now()} [relay]   тело         {preview}")
 
-        #Получение из письма темы и тела, для дальнейшей обработки
+        # Тема и текст письма
         subject, body = parse_mail(envelope.content)
-        aiResponse = await asyncio.to_thread(classify, subject, body) #асинхронный вызов
-        print(f"Результат ии анализа письма {aiResponse}")
 
+        # Message-ID — тот же, что у клиента, иначе web-интерфейс не найдёт запись
+        message_id = extract_message_id(envelope.content)
+        print(f"{now()} [relay] Message-ID: {message_id}")
+
+        # Анализ ИИ
+        aiResponse = await asyncio.to_thread(classify, subject, body)
+        print(f"{now()} [relay] AI: {aiResponse}")
+
+        storage.add_event(message_id, "received",
+                          sender=envelope.mail_from,
+                          recipient=",".join(envelope.rcpt_tos),
+                          subject=subject)
+        storage.add_event(message_id, "ai_classified",
+                          category=aiResponse["category"],
+                          confidence=aiResponse["confidence"],
+                          reason=aiResponse["reason"])
+
+        # Решение
         direct, subject_add = aiResponseAnalise(aiResponse)
+
+        if direct:
+            action = "quarantine"
+            final_recipient = direct
+        else:
+            action = "deliver"
+            final_recipient = envelope.rcpt_tos[0] if envelope.rcpt_tos else ""
+
+        # Перенаправление
         if direct:
             envelope.rcpt_tos = [direct]
             print(f"{now()} [relay] ПЕРЕНАПРАВЛЕНО на {direct}")
+            storage.add_event(message_id, "quarantined", target=direct)
 
+        # Дополнение темы
         if subject_add:
             new_subject = subject + subject_add
             envelope.content = rewrite_subject(envelope.content, new_subject)
             print(f"{now()} [relay] ТЕМА дополнена     → {new_subject!r}")
+            storage.add_event(message_id, "subject_rewritten", new_subject=new_subject)
 
-        #Посылаем на отправку
+        # Карантин
+        eml_path = None
+        if action == "quarantine":
+            eml_path = storage.save_quarantine(message_id, envelope.content)
+            print(f"{now()} [relay] КАРАНТИН           → {eml_path}")
+
+        # Метаданные в базу
+        storage.add_message(
+            message_id=message_id,
+            sender=envelope.mail_from,
+            recipient=final_recipient,
+            subject=subject,
+            body=body,
+            category=aiResponse["category"],
+            confidence=aiResponse["confidence"],
+            reason=aiResponse["reason"],
+            action=action,
+            eml_path=eml_path,
+        )
+
+        # Пересылка
         try:
             await asyncio.to_thread(self._forward, envelope)
         except Exception as e:
             print(f"{now()} [relay] ОШИБКА пересылки: {e!r}")
+            storage.add_event(message_id, "error", message=str(e))
             return "451 Try again later"
 
+        storage.add_event(message_id, "delivered", target=final_recipient)
         print(f"{now()} [relay] Переслано на "
               f"{CFG['upstream_host']}:{CFG['upstream_port']}")
         return "250 Message accepted for delivery"

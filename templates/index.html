@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Обзор{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Обзор</h1>
+    <p class="subtitle">{{ statistics.days_label }}</p>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card accent-blue">
+    <div class="value">{{ statistics.total }}</div>
+    <div class="label">Всего писем</div>
+  </div>
+  <div class="card accent-green">
+    <div class="value">{{ statistics.delivered }}</div>
+    <div class="label">Доставлено</div>
+  </div>
+  <div class="card accent-red">
+    <div class="value">{{ statistics.quarantined }}</div>
+    <div class="label">В карантине</div>
+  </div>
+  <div class="card accent-orange">
+    <div class="value">{{ statistics.failed }}</div>
+    <div class="label">Ошибок</div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="panel">
+    <div class="table-wrap">
+      <table class="messages">
+        <thead>
+          <tr>
+            <th>От</th><th>Кому</th><th>Тема</th>
+            <th>Категория</th><th>Увер.</th><th>Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for m in messages %}
+          <tr>
+            <td><span class="addr">{{ m.sender }}</span></td>
+            <td><span class="addr">{{ m.recipient }}</span></td>
+            <td><a href="/messages/{{ m.message_id }}">{{ m.subject }}</a></td>
+            <td><span class="badge" style="background:{{ m.category_color }}">
+                {{ m.category_title }}</span></td>
+            <td>{{ m.confidence_pct }}%</td>
+            <td>{{ m.action_label }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">Писем пока нет</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="padding: 14px 16px 0; margin: 0 0 6px; font-size: 14px;
+               color: var(--muted); text-transform: uppercase;
+               letter-spacing:.05em;">Последние события</h2>
+    <ul class="events">
+      {% for e in events %}
+      <li>
+        <span class="ev-name">{{ e.event }}</span>
+        <span class="ev-detail">{{ e.detail }}</span>
+      </li>
+      {% else %}
+      <li class="muted">Событий нет</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% endblock %}

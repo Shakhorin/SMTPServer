@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Тестовое письмо{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <h1>Отправить тестовое письмо</h1>
+</div>
+
+<div class="split">
+
+  <div class="panel" style="padding: 20px;">
+    <form method="post">
+
+      <div class="row">
+        <label>Пресет</label>
+        <select name="preset" onchange="this.form.submit()">
+          <option value="">— вручную —</option>
+          <option value="normal"      {% if preset=='normal' %}selected{% endif %}>Обычное</option>
+          <option value="terrorist"   {% if preset=='terrorist' %}selected{% endif %}>Террористическая угроза</option>
+          <option value="technogenic" {% if preset=='technogenic' %}selected{% endif %}>Техногенная авария</option>
+          <option value="illegal"     {% if preset=='illegal' %}selected{% endif %}>Противоправные действия</option>
+          <option value="vague"       {% if preset=='vague' %}selected{% endif %}>Неопределённая угроза</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Отправитель</label>
+        <input name="sender" value="{{ defaults.sender }}">
+      </div>
+
+      <div class="row">
+        <label>Получатель</label>
+        <input name="recipient" value="{{ defaults.recipient }}">
+      </div>
+
+      <div class="row">
+        <label>Тема</label>
+        <input name="subject" value="{{ defaults.subject }}">
+      </div>
+
+      <div class="row">
+        <label>Тело письма</label>
+        <textarea name="body" rows="7">{{ defaults.body }}</textarea>
+      </div>
+
+      <button class="btn" type="submit">Отправить</button>
+    </form>
+  </div>
+
+  <div>
+    {% if error %}
+      <div class="notice error"><b>Ошибка:</b> {{ error }}</div>
+    {% endif %}
+
+    {% if result.sent %}
+      <div class="panel" style="padding: 20px;">
+        <h2 style="margin-top:0">Результат</h2>
+        <dl class="kv">
+          <dt>Message-ID</dt><dd><code>{{ result.message_id }}</code></dd>
+          <dt>Шлюз</dt><dd>{{ result.gateway }}</dd>
+          {% if result.classification %}
+            <dt>Категория</dt>
+            <dd><span class="badge"
+                style="background:{{ result.classification.category_color }}">
+                {{ result.classification.category_title }}</span></dd>
+            <dt>Уверенность</dt><dd>{{ result.classification.confidence_pct }}%</dd>
+            <dt>Действие</dt><dd>{{ result.classification.action_label }}</dd>
+            <dt>Причина</dt><dd>{{ result.classification.reason }}</dd>
+          {% endif %}
+        </dl>
+
+        {% if not result.completed %}
+          <div class="notice info">
+            Письмо ушло на шлюз, но вердикт за отведённое время не появился.
+            Загляните в <a href="/messages">список писем</a> через пару секунд.
+          </div>
+        {% endif %}
+      </div>
+
+      {% if result.events %}
+      <div class="panel">
+        <ul class="events">
+          {% for e in result.events %}
+          <li>
+            <span class="ev-name">{{ e.event }}</span>
+            <span class="ev-detail">{{ e.detail }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

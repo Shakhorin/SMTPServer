@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}SMTP Gateway{% endblock %}</title>
+<style>
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --text: #1f2430;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+  width: 100%;
+}
+@media (min-width: 1900px) {
+  .container { max-width: 1800px; }
+}
+
+header.topbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex; align-items: center; gap: 24px;
+}
+header.topbar .logo {
+  font-weight: 700; font-size: 17px; color: var(--text);
+  text-decoration: none;
+}
+header.topbar nav a {
+  color: var(--muted); text-decoration: none; margin-right: 18px;
+  font-weight: 500;
+}
+header.topbar nav a:hover { color: var(--primary); }
+header.topbar nav a.active { color: var(--text); }
+
+h1 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+h2 { font-size: 18px; margin: 28px 0 12px; font-weight: 600; }
+p.subtitle { color: var(--muted); margin: 0 0 24px; }
+
+/* --- карточки --- */
+.cards {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 28px;
+}
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.card .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.card .label { color: var(--muted); font-size: 13px; margin-top: 4px;
+               text-transform: uppercase; letter-spacing: .04em; }
+.card.accent-blue   .value { color: var(--primary); }
+.card.accent-green  .value { color: #16a34a; }
+.card.accent-red    .value { color: #dc2626; }
+.card.accent-orange .value { color: #ea580c; }
+
+/* --- панели и таблицы --- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  vertical-align: top;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+th {
+  background: #fafbfc;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfc; }
+td a { color: var(--primary); text-decoration: none; }
+td a:hover { text-decoration: underline; }
+
+/* Пропорции колонок для таблиц писем */
+table.messages th:nth-child(1), table.messages td:nth-child(1) { width: 18%; }
+table.messages th:nth-child(2), table.messages td:nth-child(2) { width: 18%; }
+table.messages th:nth-child(3), table.messages td:nth-child(3) { width: 32%; }
+table.messages th:nth-child(4), table.messages td:nth-child(4) { width: 14%; }
+table.messages th:nth-child(5), table.messages td:nth-child(5) { width: 8%;  }
+table.messages th:nth-child(6), table.messages td:nth-child(6) { width: 10%; }
+
+/* Центрируем содержимое колонки «Категория» */
+table.messages td:nth-child(4) {
+  text-align: center;
+}
+
+/* --- адреса моно-шрифтом --- */
+td .addr {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* --- бейджи --- */
+.badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: normal;
+  line-height: 1.3;
+  max-width: 100%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* --- кнопки --- */
+.btn {
+  display: inline-block; padding: 9px 18px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent; text-decoration: none;
+  background: var(--primary); color: #fff;
+  transition: background .15s;
+}
+.btn:hover { background: var(--primary-hover); }
+.btn.ghost {
+  background: transparent; color: var(--text); border-color: var(--border);
+}
+.btn.ghost:hover { background: #f3f4f6; }
+
+/* --- формы --- */
+form label { display: block; font-size: 13px; color: var(--muted);
+             margin-bottom: 6px; font-weight: 500; }
+form input, form textarea, form select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: inherit;
+  background: #fff; color: var(--text);
+}
+form input:focus, form textarea:focus, form select:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+form .row { margin-bottom: 16px; }
+form textarea { resize: vertical; min-height: 100px; }
+
+/* --- код --- */
+pre {
+  background: #0f172a; color: #e2e8f0; padding: 16px;
+  border-radius: 8px; overflow-x: auto; font-size: 13px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre-wrap; word-break: break-word; margin: 0;
+}
+
+.muted { color: var(--muted); }
+.kv { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); font-size: 13px; }
+.kv dd { margin: 0; font-size: 14px; }
+
+/* --- события --- */
+.events { list-style: none; padding: 0; margin: 0; }
+.events li {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: 13px; display: flex; gap: 12px;
+}
+.events li:last-child { border-bottom: none; }
+.events .ev-name { font-weight: 600; min-width: 130px; }
+.events .ev-detail { color: var(--muted); }
+
+/* --- уведомления --- */
+.notice {
+  padding: 12px 16px; border-radius: 8px; font-size: 14px;
+  margin: 12px 0;
+}
+.notice.error   { background: #fee2e2; color: #991b1b; }
+.notice.ok      { background: #dcfce7; color: #166534; }
+.notice.info    { background: #dbeafe; color: #1e40af; }
+
+/* --- сплит --- */
+.split {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+}
+@media (max-width: 1100px) { .split { grid-template-columns: 1fr; } }
+
+.page-head { display: flex; justify-content: space-between;
+             align-items: center; margin-bottom: 20px; }
+.page-head a.back { color: var(--muted); text-decoration: none;
+                    font-size: 14px; }
+.page-head a.back:hover { color: var(--primary); }
+
+/* --- адаптив таблиц --- */
+@media (max-width: 1200px) {
+  table.messages th:nth-child(5),
+  table.messages td:nth-child(5),
+  table.messages th:nth-child(6),
+  table.messages td:nth-child(6) { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="/" class="logo">🛡 SMTP Gateway</a>
+  <nav>
+    <a href="/">Обзор</a>
+    <a href="/messages">Письма</a>
+    <a href="/quarantine">Карантин</a>
+    <a href="/send-test">Тест</a>
+    <a href="/docs">API</a>
+  </nav>
+</header>
+<div class="container">
+{% block content %}{% endblock %}
+</div>
+</body>
+</html>

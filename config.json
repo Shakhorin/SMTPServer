@@ -48,5 +48,13 @@
     "2" : "tech@corp.com",
     "3" : "illegal@corp.com",
     "4" : "otherdange@corp.com"
+  },
+  "storage": {
+    "db": "storage.db",
+    "quarantine_dir": "./quarantine"
+  },
+  "web": {
+    "host": "127.0.0.1",
+    "port": 8000
   }
 }
