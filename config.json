@@ -14,5 +14,15 @@
     "listen_port": 2525,
     "mailbox_dir": "./mailbox",
     "local_domains": ["corp.com"]
+  },
+  "sender": {
+     "relay_host": "127.0.0.1",
+     "relay_port": 1025,
+     "from_addr": "sender@test.local",
+     "to_addr": "user1@corp.com"
+  },
+  "print": {
+    "show_body": true,
+    "body_chars": 500
   }
 }
