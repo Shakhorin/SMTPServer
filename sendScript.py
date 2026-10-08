@@ -24,19 +24,17 @@ def build_message(msgSubject, msgBody) -> EmailMessage:
 
 
 def main() -> int:
+    errors = 0
     for subject, body in msgTest:
-        msg = build_message(subject, body)
         try:
-            with smtplib.SMTP(CFG["relay_host"], CFG["relay_port"], timeout=10) as s:
-                s.set_debuglevel(0)          # поставьте 1, чтобы видеть SMTP-диалог
-                s.send_message(msg)
+            with smtplib.SMTP(CFG["relay_host"], CFG["relay_port"], timeout=180) as s:
+                s.send_message(build_message(subject, body))
+            print(f"OK: {subject}")
         except Exception as e:
-            print(f"Не удалось отправить: {e}", file=sys.stderr)
-            return 1
+            print(f"FAIL: {subject} — {e}", file=sys.stderr)
+            errors += 1
 
-        print(f"OK: письмо от {CFG['from_addr']} к {CFG['to_addr']} "
-              f"передано на {CFG['relay_host']}:{CFG['relay_port']}")
-    return 0
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":

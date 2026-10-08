@@ -24,5 +24,23 @@
   "print": {
     "show_body": true,
     "body_chars": 500
+  },
+  "ai": {
+    "enabled": true,
+    "url": "http://127.0.0.1:11434/api/generate",
+    "model": "yandex/YandexGPT-5-Lite-8B-instruct-GGUF",
+    "timeout": 120,
+    "keep_alive": "30m",
+    "prompt": "Ты — автоматизированная система анализа почтового трафика на предмет угроз.\nКатегории угроз:\n1 - Угрозы террористического характера.\n2 - Угрозы аварий техногенного характера.\n3 - Угрозы противоправных действий.\n4 - Иные неопределенные угрозы.\nЕсли угроз нет, верни is_threat: false.\nОтвечай только на русском языке.\nВерни ответ СТРОГО в формате JSON без лишнего текста:\n{\"is_threat\": true/false, \"category\": 0-4, \"confidence\": число от 0-1, \"reason\": \"краткое обоснование\"}\n\nТема: {subject}\n\nТекст письма:\n{body}",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "is_threat":  { "type": "boolean" },
+        "category":   { "type": "integer", "minimum": 0, "maximum": 4 },
+        "confidence": { "type": "number",  "minimum": 0, "maximum": 1 },
+        "reason":     { "type": "string" }
+      },
+    "required": ["is_threat", "category", "confidence", "reason"]
   }
+}
 }
