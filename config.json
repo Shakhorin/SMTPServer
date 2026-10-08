@@ -1,0 +1,18 @@
+{
+  "relay": {
+    "listen_host": "127.0.0.1",
+    "listen_port": 1025,
+    "upstream_host": "127.0.0.1",
+    "upstream_port": 2525,
+    "upstream_user": null,
+    "upstream_password": null,
+    "use_starttls": false,
+    "allowed_recipient_domains": ["corp.com"]
+  },
+  "upstream": {
+    "listen_host": "127.0.0.1",
+    "listen_port": 2525,
+    "mailbox_dir": "./mailbox",
+    "local_domains": ["corp.com"]
+  }
+}
