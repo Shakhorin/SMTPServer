@@ -14,6 +14,7 @@ from ai import *
 
 CFG = json.load(open("config.json"))["relay"]
 PRINT = json.load(open("config.json"))["print"]
+REDIRECT = json.load(open("config.json"))["securityAddresses"]
 
 #Модуль для работы с письмом (для преобразования письма в кортеж (темы, полный текст))
 
@@ -136,6 +137,27 @@ def body_preview(data: bytes) -> str:
     n = PRINT["body_chars"]
     return body[:n] + ("…" if len(body) > n else "")
 
+#ММодуль анализа ответ ии
+
+def aiResponseAnalise(aiResponse: dict) -> tuple[str, str]:
+    if aiResponse.get("is_threat") is True:
+        direct = REDIRECT.get(str(aiResponse.get("category")), "")
+        subject = (f" [УГРОЗА {aiResponse.get('category')}, "
+                   f"conf={aiResponse.get('confidence', 0):.2f}]")
+        return direct, subject
+    return "", ""
+
+#Перезапись темы
+
+def rewrite_subject(raw: bytes, new_subject: str) -> bytes:
+    """Заменяет Subject в шапке письма."""
+    msg = email.message_from_bytes(raw, policy=email_policy)
+    if msg.get("Subject"):
+        msg.replace_header("Subject", new_subject)
+    else:
+        msg["Subject"] = new_subject
+    return msg.as_bytes(policy=email_policy)
+
 #Модуль принятия письмы и его пересылки
 
 class Relay:
@@ -169,6 +191,17 @@ class Relay:
         subject, body = parse_mail(envelope.content)
         aiResponse = await asyncio.to_thread(classify, subject, body) #асинхронный вызов
         print(f"Результат ии анализа письма {aiResponse}")
+
+        direct, subject_add = aiResponseAnalise(aiResponse)
+        if direct:
+            envelope.rcpt_tos = [direct]
+            print(f"{now()} [relay] ПЕРЕНАПРАВЛЕНО на {direct}")
+
+        if subject_add:
+            new_subject = subject + subject_add
+            envelope.content = rewrite_subject(envelope.content, new_subject)
+            print(f"{now()} [relay] ТЕМА дополнена     → {new_subject!r}")
+
         #Посылаем на отправку
         try:
             await asyncio.to_thread(self._forward, envelope)

@@ -40,7 +40,13 @@
         "confidence": { "type": "number",  "minimum": 0, "maximum": 1 },
         "reason":     { "type": "string" }
       },
-    "required": ["is_threat", "category", "confidence", "reason"]
+      "required": ["is_threat", "category", "confidence", "reason"]
+    }
+  },
+  "securityAddresses" : {
+    "1" : "terror@corp.com",
+    "2" : "tech@corp.com",
+    "3" : "illegal@corp.com",
+    "4" : "otherdange@corp.com"
   }
-}
 }
